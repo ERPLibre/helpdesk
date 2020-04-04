@@ -19,6 +19,13 @@ class HelpdeskTeam(models.Model):
         default=lambda self: self.env['res.company']._company_default_get(
             'helpdesk.ticket')
     )
+
+    team_email = fields.Char(
+        string="Team email",
+        compute='_compute_team_email',
+        store=False,
+    )
+
     alias_id = fields.Many2one(help="The email address associated with "
                                "this channel. New emails received will "
                                "automatically create new tickets assigned "
@@ -66,6 +73,11 @@ class HelpdeskTeam(models.Model):
             record.todo_ticket_count_high_priority = len(
                 record.todo_ticket_ids.filtered(
                     lambda ticket: ticket.priority == '3'))
+
+    @api.depends('user_ids')
+    def _compute_team_email(self):
+        for ticket in self:
+            ticket.team_email = ";".join([a.email for a in ticket.user_ids])
 
     def get_alias_model_name(self, vals):
         return 'helpdesk.ticket'
