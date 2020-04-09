@@ -2,7 +2,6 @@ from odoo import api, fields, models
 
 
 class HelpdeskTeam(models.Model):
-
     _name = 'helpdesk.ticket.team'
     _description = 'Helpdesk Ticket Team'
     _inherit = ['mail.thread', 'mail.alias.mixin']
@@ -30,6 +29,9 @@ class HelpdeskTeam(models.Model):
                                "this channel. New emails received will "
                                "automatically create new tickets assigned "
                                "to the channel.")
+    notify_team = fields.Boolean(string="Notify team", default=True,
+                                 help="Enable to send email to all team's member.")
+
     color = fields.Integer("Color Index", default=0)
 
     ticket_ids = fields.One2many(
