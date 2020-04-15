@@ -32,6 +32,9 @@ class HelpdeskTeam(models.Model):
     notify_team = fields.Boolean(string="Notify team", default=True,
                                  help="Enable to send email to all team's member.")
 
+    custom_emails = fields.Char(string="Custom emails",
+                                help="Add custom emails, separate it by ;")
+
     color = fields.Integer("Color Index", default=0)
 
     ticket_ids = fields.One2many(
@@ -76,10 +79,13 @@ class HelpdeskTeam(models.Model):
                 record.todo_ticket_ids.filtered(
                     lambda ticket: ticket.priority == '3'))
 
-    @api.depends('user_ids')
+    @api.depends('user_ids', 'custom_emails')
     def _compute_team_email(self):
         for ticket in self:
-            ticket.team_email = ";".join([a.email for a in ticket.user_ids])
+            value = ";".join([a.email for a in ticket.user_ids])
+            if ticket.custom_emails:
+                value += ";" + ticket.custom_emails
+            ticket.team_email = value
 
     def get_alias_model_name(self, vals):
         return 'helpdesk.ticket'
