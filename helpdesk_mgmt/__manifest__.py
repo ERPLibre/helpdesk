@@ -33,6 +33,7 @@
         'views/helpdesk_ticket_view.xml',
         'views/helpdesk_dashboard_view.xml',
         'views/report_helpdesk_ticket.xml',
+        'wizards/helpdesk_merge_category_wizard.xml',
     ],
     'demo': [
         'demo/helpdesk_demo.xml',
