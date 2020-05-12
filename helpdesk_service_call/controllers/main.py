@@ -8,10 +8,8 @@ import os
 
 # Add path to support inherit helpdesk_mgmt_controllers_main.HelpdeskTicketController
 # inherit not working with http.Controller
-# TODO fix the path when moving modules in OCA_helpdesk
 new_path = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', '..', 'OCA_helpdesk',
-                 'helpdesk_mgmt'))
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'helpdesk_mgmt'))
 sys.path.append(new_path)
 from controllers import main as helpdesk_mgmt_controllers_main
 
