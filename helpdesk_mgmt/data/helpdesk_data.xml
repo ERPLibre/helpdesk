@@ -7,7 +7,13 @@
       <field name="sequence">9</field>
     </record>
   </data>
+
   <data noupdate="1">
+    <record id="helpdesk_ticket_category_contact_us" model="helpdesk.ticket.category">
+      <field name="company_id" ref="base.main_company"/>
+      <field name="name">Contact Us</field>
+      <field eval="True" name="active"/>
+    </record>
     <!--Email template -->
     <record id="assignment_email_template" model="mail.template">
       <field name="name">Ticket Assignment</field>
@@ -38,6 +44,27 @@
         <p>Hello team ${object.team_id.name},</p>
         <p>The ticket <a href="${object.get_ticket_url()}">${object.number}</a> has been assigned to your team.</p>
       </field>
+    </record>
+
+    <record id="assignment_user_contact_us_email_template" model="mail.template">
+        <field name="name">Ticket confirmation</field>
+        <field name="model_id" ref="model_helpdesk_ticket"/>
+        <field name="email_from">${object.company_id.partner_id.email}</field>
+        <field name="email_to">${object.partner_email}</field>
+        <field name="subject">${object.company_id.name} Ticket confirmation (Ref ${object.number or 'n/a' })
+        </field>
+        <field name="partner_to">${object.partner_id.id}</field>
+        <field name="auto_delete" eval="False"/>
+        <field name="lang">${object.partner_id.lang}</field>
+        <field name="body_html" type="xml">
+            <p>Hello ${object.partner_name},</p>
+            <p>The ticket ${object.number} has been created from contact us form. Thanks!
+                Received information:
+                Nom: ${object.partner_name}
+                Email: ${object.partner_email}
+                Description: ${object.description}
+            </p>
+        </field>
     </record>
 
     <record id="closed_ticket_template" model="mail.template">
