@@ -18,5 +18,5 @@ Generate ticket in the Helpdesk app from a form published.
     ],
     'qweb': [],
     'installable': True,
-    'auto_install': False,
+    'auto_install': True,
 }
