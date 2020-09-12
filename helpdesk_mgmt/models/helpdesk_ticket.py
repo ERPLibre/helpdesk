@@ -145,7 +145,7 @@ class HelpdeskTicket(models.Model):
                 if result.team_id and result.team_id.notify_team:
                     result.send_team_mail()
 
-                if result.category_id == self.env.ref(
+                if result.category_id.id == self.env.ref(
                     'helpdesk_mgmt.helpdesk_ticket_category_contact_us').id:
                     result.send_user_contact_us_mail()
 
