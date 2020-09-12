@@ -33,15 +33,15 @@
                     <br/>
                     Address: ${object.partner_address}
                     <br/>
-                    ${"Address invoice: " + object.partner_address_invoice.name if object.partner_address_invoice else ""}
+                    Address invoice: ${object.partner_address_invoice.name if object.partner_address_invoice else ""}
                     <br/>
-                    ${"Description: " + object.description.name if object.description else ""}
+                    Description: ${object.description}
                     <br/>
-                    ${"Actual stage: " + object.stage.name if object.stage else ""}
+                    Actual stage: ${object.stage_id.name if object.stage_id else ""}
                     <br/>
-                    ${"Problem Location: " + object.problem_location.name if object.problem_location else ""}
+                    Problem Location: ${object.problem_location}
                     <br/>
-                    ${"Affected system: " + object.affected_system_id.name if object.affected_system_id else ""}
+                    Affected system: ${object.affected_system_id.name if object.affected_system_id else ""}
                 </p>
             </field>
         </record>
