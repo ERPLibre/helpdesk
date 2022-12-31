@@ -2,7 +2,6 @@ from odoo import api, fields, models
 
 
 class HelpdeskTeam(models.Model):
-
     _name = 'helpdesk.ticket.team'
     _description = 'Helpdesk Ticket Team'
     _inherit = ['mail.thread', 'mail.alias.mixin']
@@ -19,10 +18,23 @@ class HelpdeskTeam(models.Model):
         default=lambda self: self.env['res.company']._company_default_get(
             'helpdesk.ticket')
     )
+
+    team_email = fields.Char(
+        string="Team email",
+        compute='_compute_team_email',
+        store=False,
+    )
+
     alias_id = fields.Many2one(help="The email address associated with "
                                "this channel. New emails received will "
                                "automatically create new tickets assigned "
                                "to the channel.")
+    notify_team = fields.Boolean(string="Notify team", default=True,
+                                 help="Enable to send email to all team's member.")
+
+    custom_emails = fields.Char(string="Custom emails",
+                                help="Add custom emails, separate it by ;")
+
     color = fields.Integer("Color Index", default=0)
 
     ticket_ids = fields.One2many(
@@ -66,6 +78,14 @@ class HelpdeskTeam(models.Model):
             record.todo_ticket_count_high_priority = len(
                 record.todo_ticket_ids.filtered(
                     lambda ticket: ticket.priority == '3'))
+
+    @api.depends('user_ids', 'custom_emails')
+    def _compute_team_email(self):
+        for ticket in self:
+            value = ";".join([a.email for a in ticket.user_ids])
+            if ticket.custom_emails:
+                value += ";" + ticket.custom_emails
+            ticket.team_email = value
 
     def get_alias_model_name(self, vals):
         return 'helpdesk.ticket'

@@ -2,7 +2,6 @@ from odoo import _, api, fields, models, tools
 
 
 class HelpdeskTicket(models.Model):
-
     _name = 'helpdesk.ticket'
     _description = 'Helpdesk Ticket'
     _rec_name = 'number'
@@ -15,11 +14,11 @@ class HelpdeskTicket(models.Model):
     active = fields.Boolean(default=True)
     number = fields.Char(string='Ticket number', default="/",
                          readonly=True)
-    name = fields.Char(string='Title', required=True)
+    name = fields.Char(string='Title', required=True, track_visibility='onchange')
     description = fields.Html(required=True, sanitize_style=True)
     user_id = fields.Many2one(
         'res.users',
-        string='Assigned user',)
+        string='Assigned user', )
 
     user_ids = fields.Many2many(
         comodel_name='res.users',
@@ -38,9 +37,9 @@ class HelpdeskTicket(models.Model):
         default=_get_default_stage_id,
         track_visibility='onchange',
     )
-    partner_id = fields.Many2one('res.partner')
-    partner_name = fields.Char()
-    partner_email = fields.Char()
+    partner_id = fields.Many2one('res.partner', track_visibility='onchange')
+    partner_name = fields.Char(track_visibility='onchange')
+    partner_email = fields.Char(track_visibility='onchange')
 
     last_stage_update = fields.Datetime(
         string='Last Stage Update',
@@ -71,7 +70,11 @@ class HelpdeskTicket(models.Model):
         ('1', _('Medium')),
         ('2', _('High')),
         ('3', _('Very High')),
-    ], string='Priority', default='1')
+    ], string='Priority', default='1', track_visibility='onchange')
+    attachment_ids = fields.One2many(
+        'ir.attachment', 'res_id',
+        domain=[('res_model', '=', 'helpdesk.ticket')],
+        string="Media Attachments")
     color = fields.Integer(string='Color Index')
     kanban_state = fields.Selection([
         ('normal', 'Default'),
@@ -79,8 +82,19 @@ class HelpdeskTicket(models.Model):
         ('blocked', 'Blocked')], string='Kanban State')
 
     def send_user_mail(self):
-        self.env.ref('helpdesk_mgmt.assignment_email_template'). \
-            send_mail(self.id)
+        if self.user_id and not self._context.get('mail_notrack'):
+            self.env.ref('helpdesk_mgmt.assignment_email_template'). \
+                send_mail(self.id, email_values={}, force_send=True)
+
+    def send_team_mail(self):
+        if self.team_id and not self._context.get('mail_notrack'):
+            self.env.ref('helpdesk_mgmt.assignment_team_email_template'). \
+                send_mail(self.id, email_values={}, force_send=True)
+
+    def send_user_contact_us_mail(self):
+        if self.partner_email and not self._context.get('mail_notrack'):
+            self.env.ref('helpdesk_mgmt.assignment_user_contact_us_email_template'). \
+                send_mail(self.id, email_values={}, force_send=True)
 
     def assign_to_me(self):
         self.write({'user_id': self.env.user.id})
@@ -96,7 +110,7 @@ class HelpdeskTicket(models.Model):
     def _onchange_dominion_user_id(self):
         if self.user_id:
             if self.user_id and self.user_ids and \
-                    self.user_id not in self.user_ids:
+                self.user_id not in self.user_ids:
                 self.update({
                     'user_id': False
                 })
@@ -110,27 +124,31 @@ class HelpdeskTicket(models.Model):
     # CRUD
     # ---------------------------------------------------
 
-    @api.model
-    def create(self, vals):
-        if vals.get('number', '/') == '/':
-            seq = self.env['ir.sequence']
-            if 'company_id' in vals:
-                seq = seq.with_context(force_company=vals['company_id'])
-            vals['number'] = seq.next_by_code(
-                'helpdesk.ticket.sequence') or '/'
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('number', '/') == '/':
+                seq = self.env['ir.sequence']
+                if 'company_id' in vals:
+                    seq = seq.with_context(force_company=vals['company_id'])
+                vals['number'] = seq.next_by_code(
+                    'helpdesk.ticket.sequence') or '/'
+        res = super().create(vals_list)
 
-        if vals.get("partner_id") and (
-            "partner_name" not in vals or "partner_email" not in vals
-        ):
-            partner = self.env["res.partner"].browse(vals["partner_id"])
-            vals.setdefault("partner_name", partner.name)
-            vals.setdefault("partner_email", partner.email)
+        if not self._context.get('mail_notrack'):
+            for result in res:
+                # Check if mail to the user has to be sent
+                if result.user_id:
+                    result.send_user_mail()
 
-        res = super().create(vals)
+                # Check if mail to the team has to be sent
+                if result.team_id and result.team_id.notify_team:
+                    result.send_team_mail()
 
-        # Check if mail to the user has to be sent
-        if vals.get('user_id') and res:
-            res.send_user_mail()
+                if result.category_id.id == self.env.ref(
+                    'helpdesk_mgmt.helpdesk_ticket_category_contact_us').id:
+                    result.send_user_contact_us_mail()
+
         return res
 
     @api.multi
@@ -160,10 +178,15 @@ class HelpdeskTicket(models.Model):
 
         res = super(HelpdeskTicket, self).write(vals)
 
-        # Check if mail to the user has to be sent
-        for ticket in self:
-            if vals.get('user_id'):
-                ticket.send_user_mail()
+        # Check if mail to the user/team has to be sent
+        if not self._context.get('mail_notrack'):
+            for ticket in self:
+                if vals.get('user_id'):
+                    ticket.send_user_mail()
+
+                if vals.get('team_id') and ticket.team_id.notify_team:
+                    ticket.send_team_mail()
+
         return res
 
     # ---------------------------------------------------
@@ -244,3 +267,13 @@ class HelpdeskTicket(models.Model):
                     reason=reason
                 )
         return recipients
+
+    def get_ticket_url(self, ticket_id=None):
+        if ticket_id is None:
+            ticket_id = self.id
+        task_action = self.env.ref("helpdesk_mgmt.helpdesk_ticket_action")
+        menu = self.env.ref("helpdesk_mgmt.helpdesk_ticket_main_menu")
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        link = "%s/web?db=%s#id=%s&action=%s&view_type=form&model=helpdesk.ticket&menu_id=%s" % (
+            base_url, self.env.cr.dbname, ticket_id, task_action.id, menu.id)
+        return link
