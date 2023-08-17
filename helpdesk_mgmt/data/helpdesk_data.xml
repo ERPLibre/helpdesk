@@ -58,13 +58,13 @@
                           <table width="590" border="0" cellpadding="0" bgcolor="#875A7B" style="min-width: 590px; background-color: rgb(135,90,123); padding: 20px; border-collapse:separate;">
                             <tr>
                               <td valign="middle" align="left" style="color: #fff; padding-top: 10px; padding-bottom: 10px; font-size: 12px;">
-                                ${object.company_id.phone}
+                                ${object.company_id.phone or ''}
                               </td>
                               <td valign="middle" align="left" style="color: #fff; padding-top: 10px; padding-bottom: 10px; font-size: 12px;">
-                                ${object.company_id.email}
+                                ${object.company_id.email or ''}
                               </td>
                               <td valign="middle" align="left" style="color: #fff; padding-top: 10px; padding-bottom: 10px; font-size: 12px;">
-                                ${object.company_id.website}
+                                ${object.company_id.website or ''}
                               </td>
                             </tr>
                           </table>
@@ -125,13 +125,13 @@
                           <table width="590" border="0" cellpadding="0" bgcolor="#875A7B" style="min-width: 590px; background-color: rgb(135,90,123); padding: 20px; border-collapse:separate;">
                             <tr>
                               <td valign="middle" align="left" style="color: #fff; padding-top: 10px; padding-bottom: 10px; font-size: 12px;">
-                                ${object.company_id.phone}
+                                ${object.company_id.phone or ''}
                               </td>
                               <td valign="middle" align="left" style="color: #fff; padding-top: 10px; padding-bottom: 10px; font-size: 12px;">
-                                ${object.company_id.email}
+                                ${object.company_id.email or ''}
                               </td>
                               <td valign="middle" align="left" style="color: #fff; padding-top: 10px; padding-bottom: 10px; font-size: 12px;">
-                                ${object.company_id.website}
+                                ${object.company_id.website or ''}
                               </td>
                             </tr>
                           </table>
