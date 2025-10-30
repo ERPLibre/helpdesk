@@ -269,6 +269,7 @@ class HelpdeskTicket(models.Model):
         if custom_values is None:
             custom_values = {}
         defaults = {
+            "number": "/",
             "name": msg.get("subject") or self.env._("No Subject"),
             "description": msg.get("body"),
             "partner_email": msg.get("from"),
